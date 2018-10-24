@@ -35,19 +35,23 @@ mb_extract_taxon <- function (desc) {
 
 mb_all <- function(mb_id, wait = 0.2) {
   Sys.sleep(wait)
-  print(mb_id)
-  basic <- mb_id_to_basic(mb_id)
-  basic_df <- basic %>% mb_extract_taxon
-  # print(basic_df %>% glimpse)
-  ids <- basic %>%  mb_extract_description_ids
-  # print(ids)
-  ids_dfs <- ids %>% map_df(function(id) {
-    Sys.sleep(wait)
-    mb_desc_id_to_desc(id) %>% mb_extract_taxon
+  tryCatch({
+    print(mb_id)
+    basic <- mb_id_to_basic(mb_id)
+    basic_df <- basic %>% mb_extract_taxon
+    # print(basic_df %>% glimpse)
+    ids <- basic %>%  mb_extract_description_ids
+    # print(ids)
+    ids_dfs <- ids %>% map_df(function(id) {
+      Sys.sleep(wait)
+      mb_desc_id_to_desc(id) %>% mb_extract_taxon
+    })
+    colnames(basic_df) <- paste0('base_',colnames(basic_df))
+    colnames(ids_dfs) <- paste0('description_',colnames(ids_dfs))
+    saveRDS(cbind(basic_df, ids_dfs), paste0('output/',mb_id,'.RDS'))
+  }, error = function(e) {
+    system(paste('echo', mb_id, '>> fail_ids.txt'))
   })
-  colnames(basic_df) <- paste0('base_',colnames(basic_df))
-  colnames(ids_dfs) <- paste0('description_',colnames(ids_dfs))
-  saveRDS(cbind(basic_df, ids_dfs), paste0('output/',mb_id,'.RDS'))
 }
 
 
